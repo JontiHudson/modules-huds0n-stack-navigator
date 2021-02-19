@@ -1,6 +1,6 @@
 {
   "name": "@huds0n/expo",
-  "version": "1.5.0-beta.13",
+  "version": "1.5.0-beta.14",
   "description": "Huds0n Expo modules: Image Manager, Notification Manager, and Orientation Manager",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -15,13 +15,16 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@huds0n/expo-cache-image": "1.5.0-beta.13",
-    "@huds0n/expo-notification-manager": "1.5.0-beta.13",
-    "@huds0n/expo-orientation-manager": "1.5.0-beta.13",
-    "@huds0n/react-native": "1.5.0-beta.13"
+    "@huds0n/expo-cache-image": "1.5.0-beta.14",
+    "@huds0n/expo-notification-manager": "1.5.0-beta.14",
+    "@huds0n/expo-orientation-manager": "1.5.0-beta.14",
+    "@huds0n/react-native": "1.5.0-beta.14"
   },
   "devDependencies": {
-    "@types/react-native": "~0.63.2"
+    "@types/react": "~16.9.35",
+    "@types/react-native": "~0.63.2",
+    "@types/tinycolor2": "^1.4.2",
+    "typescript": "~4.0.0"
   },
   "publishConfig": {
     "access": "public"
