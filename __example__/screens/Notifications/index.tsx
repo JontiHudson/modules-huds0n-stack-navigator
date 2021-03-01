@@ -2,7 +2,8 @@ import React from 'react';
 import { ListRenderItemInfo } from 'react-native';
 
 import {
-  AnimatedFlatList,
+  AnimatedList,
+  AnimationSheet,
   onDismount,
   useEffect,
   NotificationTypes,
@@ -10,7 +11,7 @@ import {
 
 import { NotificationManager, goToScreen } from '../../controllers';
 import { $ActionFAB, $Container, $Text } from '../../components';
-import { getColor } from '../../theme';
+import { getColor, spacings } from '../../theme';
 
 export default function Flatlist() {
   const [{ scheduledNotifications }] = NotificationManager.useState(
@@ -20,13 +21,10 @@ export default function Flatlist() {
   handleFAB();
 
   return (
-    <AnimatedFlatList
-      itemStartStyle={{ opacity: 0, transform: [{ translateY: 50 }] }}
-      itemAnimate={{
-        to: { opacity: 1, transform: [{ translateY: 0 }] },
-        duration: 500,
-        stagger: 50,
-      }}
+    <AnimatedList
+      animationDuration={4000}
+      itemLength={ELEMENT_HEIGHT + 2 * spacings.M}
+      at={animations.list}
       fade={{ bottom: { color: getColor('BACKGROUND') } }}
       renderItem={renderItem}
       data={scheduledNotifications}
@@ -62,11 +60,14 @@ function renderItem({
   );
 }
 
+const ELEMENT_HEIGHT = 80;
+
 const $ItemWrapper = $Container.addStyle({
   borderWidth: 1,
   borderRadius: 'M',
   padding: 'M',
   margin: 'M',
+  height: ELEMENT_HEIGHT,
 });
 
 function handleFAB() {
@@ -96,3 +97,16 @@ function handleFAB() {
 
   onDismount($ActionFAB.hide);
 }
+
+const animations = AnimationSheet.create({
+  list: ({ end }) => [
+    {
+      input: end + ELEMENT_HEIGHT,
+      style: { opacity: 1, transform: [{ translateY: 0 }] },
+    },
+    {
+      input: end,
+      style: { opacity: 0, transform: [{ translateY: 50 }] },
+    },
+  ],
+});
