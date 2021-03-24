@@ -1,14 +1,10 @@
 import themedComponents from './createThemedComponents';
 
 export const {
-  $AnimatedText,
-  $AnimatedView,
   $Badge,
   $Button,
   $CacheImage,
-  $ColorFaderContainer,
   $Container,
-  $ContentsFaderContainer,
   $DateTimeField,
   $DateTimeInput,
   $FadeOverlay,
@@ -21,7 +17,6 @@ export const {
   $TextField,
   $TextInput,
   $Toast,
-  $TransitionContainer,
   $View,
 } = themedComponents;
 

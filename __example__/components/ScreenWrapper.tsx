@@ -2,9 +2,10 @@ import React from 'react';
 
 import { NavigationState, goBack } from '../controllers/navigation';
 
+import { ContentsFaderContainer } from '@huds0n/expo';
+
 import {
   $Container,
-  $ContentsFaderContainer,
   $Icon,
   $ScrollView,
   $Text,
@@ -32,7 +33,7 @@ export function $ScreenHandler({ children }: Props) {
         </$HeaderTitleContainer>
       </$HeaderContainer>
 
-      <$ContentsFaderContainer dependencies={title} animationDuration={500}>
+      <ContentsFaderContainer dependencies={title} animationDuration={500}>
         {scrollView ? (
           <$ScrollView fade={{ bottom: { color: 'BACKGROUND' } }}>
             {children}
@@ -40,7 +41,7 @@ export function $ScreenHandler({ children }: Props) {
         ) : (
           children
         )}
-      </$ContentsFaderContainer>
+      </ContentsFaderContainer>
     </$Container>
   );
 }
