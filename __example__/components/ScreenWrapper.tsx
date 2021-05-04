@@ -4,6 +4,8 @@ import { NavigationState, goBack } from '../controllers/navigation';
 
 import { ContentsFaderContainer } from '@huds0n/expo';
 
+import { Themer } from '../theme';
+
 import {
   $Container,
   $Icon,
@@ -21,6 +23,8 @@ export function $ScreenHandler({ children }: Props) {
     'screenName',
   );
 
+  console.log(Themer.currentScheme);
+
   return (
     <$Container>
       <$HeaderContainer>
@@ -33,7 +37,11 @@ export function $ScreenHandler({ children }: Props) {
         </$HeaderTitleContainer>
       </$HeaderContainer>
 
-      <ContentsFaderContainer dependencies={title} animationDuration={500}>
+      <ContentsFaderContainer
+        dependencies={title}
+        animationDuration={500}
+        style={{ flex: 1 }}
+      >
         {scrollView ? (
           <$ScrollView fade={{ bottom: { color: 'BACKGROUND' } }}>
             {children}

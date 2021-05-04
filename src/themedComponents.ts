@@ -7,7 +7,7 @@ export function createThemedComponents<cT extends ThemerTypes.CustomTheme>(
   Themer: ThemerTypes.ThemerClass<cT>,
 ) {
   return {
-    ...createThemedComponentsRN(Themer),
+    ...createThemedComponentsRN<cT>(Themer),
 
     $CacheImage: Themer.createComponent(CacheImage, CacheImage.theming.props)
       .addProps({

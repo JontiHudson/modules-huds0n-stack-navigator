@@ -41,6 +41,7 @@ export default function Root() {
   };
 
   const CurrentScreen = ScreenSwitch[screenName];
+
   return (
     <$ScreenManager>
       <$Toast>
