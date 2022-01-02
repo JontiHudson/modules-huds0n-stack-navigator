@@ -1,7 +1,7 @@
 {
-  "name": "@huds0n/expo",
-  "version": "1.5.1-beta3",
-  "description": "Huds0n Expo modules: Image Manager, Notification Manager, and Orientation Manager",
+  "name": "@huds0n/stack-navigator",
+  "version": "1.6.0-beta-1",
+  "description": "Lightweight stack navigator",
   "main": "./index.js",
   "types": "./index.d.ts",
   "keywords": [],
@@ -15,18 +15,15 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@expo/vector-icons": "^12.0.0",
-    "@huds0n/expo-cache-image": "1.5.1-beta3",
-    "@huds0n/expo-notification-manager": "1.5.1-beta3",
-    "@huds0n/expo-orientation-manager": "1.5.1-beta3",
-    "@huds0n/react-native": "1.5.1-beta3",
-    "expo-linear-gradient": "~9.1.0"
+    "@huds0n/animations": "1.6.0-beta-1",
+    "@huds0n/error": "1.6.0-beta-1",
+    "@huds0n/shared-state": "1.6.0-beta-1",
+    "@huds0n/utilities": "1.6.0-beta-1"
   },
   "devDependencies": {
-    "@types/react": "~16.9.35",
-    "@types/react-native": "~0.63.2",
-    "@types/tinycolor2": "^1.4.2",
-    "typescript": "~4.0.0"
+    "@types/react": "^17.0.38",
+    "@types/react-native": "^0.66.11",
+    "typescript": "^4.5.4"
   },
   "publishConfig": {
     "access": "public"
