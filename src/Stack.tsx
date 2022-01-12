@@ -1,63 +1,35 @@
-import React from 'react';
-import { View, ViewStyle } from 'react-native';
-import { AnimatedView } from '@huds0n/animations';
-import { useEffect } from '@huds0n/utilities';
+import React from "react";
+import { View } from "react-native";
+import { AnimatedView } from "@huds0n/animations";
 
-import { Navigator } from './Navigator';
-
-export namespace Stack {
-  export type onFocused = (
-    focusFn: () => void | (() => any),
-    layout?: useEffect.LayoutTiming,
-  ) => void;
-
-  export type useProps<
-    R extends Navigator.RoutesParams,
-    K extends keyof R,
-  > = () => R[K];
-
-  export type NavigatorScreens<R extends Navigator.RoutesParams> = {
-    [K in keyof R]: React.ReactNode;
-  };
-
-  export type Props<R extends Navigator.RoutesParams> = {
-    navigator: Navigator<R>;
-    screens: NavigatorScreens<R>;
-    screenStyle?: ViewStyle;
-  };
-}
+import type { Types } from "./types";
 
 const BASE_STYLE = {
-  position: 'absolute',
-  height: '100%',
-  width: '100%',
+  position: "absolute",
+  height: "100%",
+  width: "100%",
 } as const;
 
-export function Stack<R extends Navigator.RoutesParams>({
+export function Stack<R extends Types.RoutesParams>({
   navigator,
   screens,
   screenStyle,
-}: Stack.Props<R>) {
-  const { animating, animation, canGoBack, currentRoute, prevRoute, stack } =
-    navigator;
+}: Types.StackProps<R>) {
+  const { animating, animation, currentRoute, prevRoute, stack } =
+    navigator.use();
 
   const backgroundStacks = stack
     .slice(2)
     .filter((route) => route.isMounted && route.id !== prevRoute.id);
 
-  function getScreen(route: Navigator.Route<R>) {
+  function getScreen(route: Types.Route<R>) {
     const Screen = screens[route.screen];
 
     // @ts-ignore
     const NavigationContext = navigator._Context;
 
     return (
-      <NavigationContext.Provider
-        value={{
-          ...route,
-          setParams: (props: any) => navigator.setProps(props, route),
-        }}
-      >
+      <NavigationContext.Provider value={route}>
         {Screen}
       </NavigationContext.Provider>
     );
@@ -79,7 +51,7 @@ export function Stack<R extends Navigator.RoutesParams>({
   ));
 
   if (prevRoute) {
-    if (animation && animating === 'OUT') {
+    if (animation && animating === "OUT") {
       screenArray.push(
         <AnimatedView
           key={prevRoute.id}
@@ -94,9 +66,9 @@ export function Stack<R extends Navigator.RoutesParams>({
           useNativeDriver={animation.useNativeDriver}
         >
           {getScreen(prevRoute)}
-        </AnimatedView>,
+        </AnimatedView>
       );
-    } else if (animating === 'IN' || prevRoute.isMounted) {
+    } else if (animating === "IN" || prevRoute.isMounted) {
       screenArray.push(
         <AnimatedView
           key={prevRoute.id}
@@ -104,17 +76,17 @@ export function Stack<R extends Navigator.RoutesParams>({
           style={{ ...screenStyle, ...BASE_STYLE, zIndex: 0 }}
         >
           {getScreen(prevRoute)}
-        </AnimatedView>,
+        </AnimatedView>
       );
     }
   }
 
-  const animateIn = canGoBack && animating === 'IN';
+  const animateIn = animating === "IN";
 
   screenArray.push(
     <AnimatedView
       key={currentRoute.id}
-      pointerEvents={animating === 'IN' ? 'none' : 'auto'}
+      pointerEvents={animateIn ? "none" : "auto"}
       animate={
         animation && animateIn
           ? {
@@ -134,8 +106,8 @@ export function Stack<R extends Navigator.RoutesParams>({
       useNativeDriver
     >
       {getScreen(currentRoute)}
-    </AnimatedView>,
+    </AnimatedView>
   );
 
-  return <View style={{ flex: 1 }}>{screenArray}</View>;
+  return <View style={{ flex: 1, overflow: "hidden" }}>{screenArray}</View>;
 }

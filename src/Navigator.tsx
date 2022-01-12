@@ -1,103 +1,39 @@
-import React, { useContext } from 'react';
-import { Dimensions, Easing, EasingFunction, ViewStyle } from 'react-native';
-import { Huds0nError } from '@huds0n/error';
-import { SharedState } from '@huds0n/shared-state';
+import React, { useContext } from "react";
 
-export namespace Navigator {
-  export type Animation =
-    | {
-        duration: number;
-        easing?: EasingFunction;
-        in: ViewStyle;
-        out: ViewStyle;
-        useNativeDriver?: boolean;
-      }
-    | false;
+import { Huds0nError } from "@huds0n/error";
+import { SharedState } from "@huds0n/shared-state";
+import { useEffect, UtilityTypes } from "@huds0n/utilities";
 
-  type RouteParams = Record<string, any> | null;
-  export type RoutesParams = Record<string, RouteParams>;
+import { transitions } from "./transitions";
+import type { Types } from "./types";
 
-  export type Route<R extends RoutesParams, S extends keyof R = keyof R> = {
-    id: number;
-    isBackground: boolean;
-    isFocused: boolean;
-    isMounted: boolean;
-    isVisible: boolean;
-    keepMounted: boolean;
-    params: R[S];
-    screen: S;
-  };
-
-  export type Key<R extends RoutesParams, S extends keyof R = keyof R> = {
-    id?: number;
-    screen: S;
-  };
-
-  export type NavigateRoute<
-    R extends RoutesParams,
-    S extends keyof R = keyof R,
-  > = { keepMounted?: boolean; screen: S; params?: Partial<R[S]> };
-
-  export type BackRoute<R extends RoutesParams, S extends keyof R> = {
-    id?: number;
-    screen: S;
-    params?: Partial<R[S]>;
-  };
-
-  export type Props<R extends RoutesParams> = {
-    defaultAnimation?: Animation;
-    initialRoute: NavigateRoute<R>;
-    routesParams: R;
-  };
-
-  export type setParams<R extends RoutesParams, K extends keyof R> = (
-    props: R[K],
-  ) => void;
-
-  export type Context<R extends RoutesParams, K extends keyof R> = Route<
-    R,
-    K
-  > & {
-    setParams: setParams<R, K>;
-  };
-}
-
-type NavigatorState<R extends Navigator.RoutesParams> = {
-  animation: Navigator.Animation;
-  stack: Navigator.Route<R>[];
-  prevStack: Navigator.Route<R>[];
-  animating: false | 'IN' | 'OUT';
+type NavigatorState<R extends Types.RoutesParams> = {
+  animation: Types.Animation;
+  stack: Types.Route<R>[];
+  prevStack: Types.Route<R>[];
+  animating: false | "IN" | "OUT";
 };
 
-const DEFAULT_ANIMATION: Navigator.Animation = {
-  in: { transform: [{ translateX: 0 }] },
-  out: {
-    transform: [
-      {
-        get translateX() {
-          return Dimensions.get('screen').width;
-        },
-      },
-    ],
-  },
-  useNativeDriver: true,
-  duration: 350,
-  easing: Easing.inOut(Easing.ease),
-};
-
-export class Navigator<R extends Navigator.RoutesParams> {
-  private _defaultAnimation: Navigator.Animation;
+export class Navigator<R extends Types.RoutesParams> {
+  private _defaultAnimation: Types.Animation;
   private _nextId = 0;
   private _internalState: SharedState<NavigatorState<R>>;
-  private _routesParams: R;
-  private _routeHx: Navigator.Route<R>[];
-  private _Context: React.Context<Navigator.Context<R, keyof R>>;
+  private _defaultRoutesParams: Partial<R>;
+  private _Context: React.Context<Types.Route<R, keyof R>>;
 
-  constructor({
-    defaultAnimation = DEFAULT_ANIMATION,
-    initialRoute,
-    routesParams,
-  }: Navigator.Props<R>) {
+  static transitions = transitions;
+
+  constructor(
+    props:
+      | Types.NavigatorProps<R>
+      | ((Nav: Navigator<R>) => Types.NavigatorProps<R>)
+  ) {
+    const {
+      defaultAnimation = Navigator.transitions.slideAcross,
+      initialRoute,
+      defaultRoutesParams = {},
+    } = typeof props === "function" ? props(this) : props;
+
     this._defaultAnimation = defaultAnimation;
     this._internalState = new SharedState<NavigatorState<R>>({
       animation: defaultAnimation,
@@ -105,8 +41,7 @@ export class Navigator<R extends Navigator.RoutesParams> {
       prevStack: [],
       animating: false,
     });
-    this._routesParams = routesParams;
-    this._routeHx = [];
+    this._defaultRoutesParams = defaultRoutesParams;
     // @ts-ignore  - Context initialised for each screen
     this._Context = React.createContext({});
 
@@ -117,8 +52,10 @@ export class Navigator<R extends Navigator.RoutesParams> {
     this.goBack = this.goBack.bind(this);
     this.navigate = this.navigate.bind(this);
     this.setAnimationEnd = this.setAnimationEnd.bind(this);
-    this.setProps = this.setProps.bind(this);
+    this.setParams = this.setParams.bind(this);
+    this.initializeParams = this.initializeParams.bind(this);
     this.use = this.use.bind(this);
+    this.useOnFocus = this.useOnFocus.bind(this);
   }
 
   get animation() {
@@ -130,7 +67,7 @@ export class Navigator<R extends Navigator.RoutesParams> {
   }
 
   get routesParams() {
-    return this._routesParams;
+    return this._defaultRoutesParams;
   }
 
   get stack() {
@@ -160,56 +97,55 @@ export class Navigator<R extends Navigator.RoutesParams> {
   getRoute<S extends keyof R>({
     id,
     screen,
-  }: Navigator.Key<R, S>): Navigator.Route<R> {
-    const route =
-      this.stack.find(
-        (r) => r.screen === screen && (id === undefined || r.id === id),
-      ) ||
-      this._routeHx.find(
-        (r) => r.screen === screen && (id === undefined || r.id === id),
-      );
+  }: Types.Key<R, S>): Types.Route<R, S> {
+    const route = this.stack.find(
+      (r) => r.screen === screen && (id === undefined || r.id === id)
+    );
 
     if (!route) {
       throw new Huds0nError({
-        name: 'NavigatorError',
-        code: 'GET_ROUTE_ERROR',
-        severity: 'HIGH',
-        message: 'Route not found',
+        name: "NavigatorError",
+        code: "GET_ROUTE_ERROR",
+        severity: "HIGH",
+        message: "Route not found",
         info: { id, screen },
       });
     }
 
-    return route;
+    return route as Types.Route<R, S>;
   }
 
   navigate<S extends keyof R>(
-    newRoute: Navigator.NavigateRoute<R, S>,
-    animation?: Navigator.Animation,
+    newRoute: Types.NavigateRoute<R, S>,
+    animation?: Types.Animation
   ) {
-    return this.dispatch([newRoute], undefined, animation)[0];
+    return this.dispatch({ routes: [newRoute], animation })[0];
   }
 
-  dispatch(
-    newRoutes?: Navigator.NavigateRoute<R, keyof R>[],
-    startingRoute?: Navigator.Key<R> | null,
-    animation: Navigator.Animation = this._defaultAnimation,
-  ) {
+  dispatch({
+    routes: newRoutes,
+    startingRoute,
+    animation = this._defaultAnimation,
+  }: {
+    routes?: Types.NavigateRoute<R, keyof R>[];
+    startingRoute?: Types.Key<R> | null;
+    animation?: Types.Animation;
+  }) {
     let newStack = [...this.stack];
 
-    if (startingRoute !== undefined) {
-      const index =
-        startingRoute === null
-          ? 0
-          : this.stack.findIndex(
-              (route) => route === this.getRoute(startingRoute),
-            ) ?? -1;
+    if (startingRoute === null) {
+      newStack = [];
+    } else if (startingRoute) {
+      const index = this.stack.findIndex(
+        (route) => route === this.getRoute(startingRoute)
+      );
 
       if (index === -1) {
         throw new Huds0nError({
-          name: 'NavigatorError',
-          code: 'DISPATCH_ERROR',
-          severity: 'HIGH',
-          message: 'Route not found',
+          name: "NavigatorError",
+          code: "DISPATCH_ERROR",
+          severity: "HIGH",
+          message: "Route not found",
           info: { startingRoute },
         });
       }
@@ -223,7 +159,7 @@ export class Navigator<R extends Navigator.RoutesParams> {
       const newRoutesWithIds = newRoutes.map((navRoute, index) => {
         const { screen, keepMounted = false, params } = navRoute;
 
-        const defaultParams = this._routesParams[screen];
+        const defaultParams = this._defaultRoutesParams[screen];
 
         const route = {
           screen,
@@ -236,13 +172,12 @@ export class Navigator<R extends Navigator.RoutesParams> {
           params:
             defaultParams || params
               ? {
-                  ...defaultParams,
-                  ...params,
+                  ...(defaultParams && defaultParams),
+                  ...(params && params),
                 }
               : null,
-        } as Navigator.Route<R>;
+        } as Types.Route<R>;
 
-        this._routeHx.push(route);
         return route;
       });
 
@@ -271,7 +206,7 @@ export class Navigator<R extends Navigator.RoutesParams> {
 
     const oldRouteInPosition = this.stack[this.stack.length - newStack.length];
 
-    const direction = oldRouteInPosition === newTopRoute ? 'OUT' : 'IN';
+    const direction = oldRouteInPosition === newTopRoute ? "OUT" : "IN";
 
     this._internalState.setState({
       animation,
@@ -287,33 +222,27 @@ export class Navigator<R extends Navigator.RoutesParams> {
     return newStack;
   }
 
-  setProps<S extends keyof R>(params: R[S], specifier?: Navigator.Key<R, S>) {
-    const route = specifier ? this.getRoute(specifier) : this.stack[0];
-
-    if (!route) {
-      throw new Huds0nError({
-        name: 'NavigatorError',
-        code: 'SET_PROPS_ERROR',
-        severity: 'HIGH',
-        message: 'Route not found',
-        info: { params, specifier },
-      });
-    }
-
-    route.params = { ...route.params, ...params };
-    this._internalState.refresh();
+  switch<S extends keyof R>(
+    newRoute: Types.NavigateRoute<R, S>,
+    animation = Navigator.transitions.fade
+  ) {
+    return this.dispatch({
+      routes: [newRoute],
+      startingRoute: null,
+      animation,
+    });
   }
 
   goBack<S extends keyof R>(
-    backRoute?: Navigator.BackRoute<R, S>,
-    animation?: Navigator.Animation,
-  ): Navigator.Route<R, keyof R> {
+    backRoute?: Types.BackRoute<R, S>,
+    animation?: Types.Animation
+  ): Types.Route<R, keyof R> {
     const { params, ...specifier } = backRoute || this.stack[1];
 
     // @ts-ignore
-    params && this.setProps(params, specifier);
+    params && this.setParams(params, specifier);
 
-    return this.dispatch(undefined, specifier, animation)[0];
+    return this.dispatch({ startingRoute: specifier, animation })[0];
   }
 
   setAnimationEnd() {
@@ -326,15 +255,79 @@ export class Navigator<R extends Navigator.RoutesParams> {
         isVisible: false,
       });
     }
-    this._internalState.setProp('animating', false);
+    this._internalState.setProp("animating", false);
   }
 
   use() {
     this._internalState.useState()[0];
+
+    return this;
   }
 
-  useNavigation<K extends keyof R>(): Navigator.Context<R, K> {
-    // @ts-ignore
-    return useContext(this._Context);
+  useRoute<S extends keyof R>(): Types.Route<R, S> {
+    try {
+      // @ts-ignore
+      return useContext(this._Context);
+    } catch {
+      throw new Huds0nError({
+        name: "NavigatorError",
+        code: "USE_ROUTE_ERROR",
+        severity: "HIGH",
+        message: "Use route can only be used within a Stack Component tree.",
+      });
+    }
+  }
+
+  setParams<S extends keyof R>(params: R[S], specifier?: Types.Key<R, S>) {
+    let route: Types.Route<R, S>;
+
+    if (specifier) {
+      route = this.getRoute<S>(specifier);
+
+      if (!route) {
+        throw new Huds0nError({
+          name: "NavigatorError",
+          code: "SET_PROPS_ERROR",
+          severity: "HIGH",
+          message: "Route not found",
+          info: { params, specifier },
+        });
+      }
+    } else {
+      route = this.useRoute<S>();
+    }
+
+    route.params = { ...route.params, ...params };
+    this._internalState.refresh();
+  }
+
+  initializeParams<S extends keyof R>(params: R[S]) {
+    this.useOnFocus(() => {
+      const route = this.currentRoute;
+      route.params = { ...route.params, ...params };
+      this._internalState.refresh();
+    });
+  }
+
+  useOnFocus(focusFn: () => any, layout?: UtilityTypes.LayoutTiming) {
+    const { isFocused } = this.useRoute();
+    useEffect(
+      () => {
+        if (isFocused) focusFn();
+      },
+      [isFocused],
+      { layout }
+    );
+  }
+
+  useOnUnfocus(unfocusFn: () => any, layout?: UtilityTypes.LayoutTiming) {
+    const { isFocused } = this.useRoute();
+    useEffect(
+      () => () => {
+        if (!isFocused) unfocusFn();
+      },
+      [isFocused],
+      { layout }
+    );
   }
 }
