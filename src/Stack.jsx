@@ -22,12 +22,7 @@ function Stack({ navigator, screens, screenStyle, }) {
         {Screen}
       </NavigationContext.Provider>);
     }
-    const screenArray = backgroundStacks.map((route) => (<animations_1.AnimatedView key={route.id} pointerEvents="none" style={{
-            ...screenStyle,
-            ...BASE_STYLE,
-            opacity: 0,
-            zIndex: -1,
-        }}>
+    const screenArray = backgroundStacks.map((route) => (<animations_1.AnimatedView key={route.id} pointerEvents="none" style={Object.assign(Object.assign(Object.assign({}, screenStyle), BASE_STYLE), { opacity: 0, zIndex: -1 })}>
       {getScreen(route)}
     </animations_1.AnimatedView>));
     if (prevRoute) {
@@ -37,12 +32,12 @@ function Stack({ navigator, screens, screenStyle, }) {
                     duration: animation.duration,
                     easing: animation.easing,
                     onAnimationEnd: navigator.setAnimationEnd,
-                }} style={{ ...screenStyle, ...BASE_STYLE, ...animation.in, zIndex: 2 }} useNativeDriver={animation.useNativeDriver}>
+                }} style={Object.assign(Object.assign(Object.assign(Object.assign({}, screenStyle), BASE_STYLE), animation.in), { zIndex: 2 })} useNativeDriver={animation.useNativeDriver}>
           {getScreen(prevRoute)}
         </animations_1.AnimatedView>);
         }
         else if (animating === "IN" || prevRoute.isMounted) {
-            screenArray.push(<animations_1.AnimatedView key={prevRoute.id} pointerEvents="none" style={{ ...screenStyle, ...BASE_STYLE, zIndex: 0 }}>
+            screenArray.push(<animations_1.AnimatedView key={prevRoute.id} pointerEvents="none" style={Object.assign(Object.assign(Object.assign({}, screenStyle), BASE_STYLE), { zIndex: 0 })}>
           {getScreen(prevRoute)}
         </animations_1.AnimatedView>);
         }
@@ -55,12 +50,7 @@ function Stack({ navigator, screens, screenStyle, }) {
                 easing: animation.easing,
                 onAnimationEnd: navigator.setAnimationEnd,
             }
-            : undefined} style={{
-            ...screenStyle,
-            ...BASE_STYLE,
-            ...(animateIn && animation && animation.out),
-            zIndex: 1,
-        }} useNativeDriver>
+            : undefined} style={Object.assign(Object.assign(Object.assign(Object.assign({}, screenStyle), BASE_STYLE), (animateIn && animation && animation.out)), { zIndex: 1 })} useNativeDriver>
       {getScreen(currentRoute)}
     </animations_1.AnimatedView>);
     return <react_native_1.View style={{ flex: 1, overflow: "hidden" }}>{screenArray}</react_native_1.View>;
