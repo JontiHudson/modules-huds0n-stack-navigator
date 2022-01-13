@@ -8,8 +8,13 @@ const shared_state_1 = require("@huds0n/shared-state");
 const utilities_1 = require("@huds0n/utilities");
 const transitions_1 = require("./transitions");
 class Navigator {
+    _defaultAnimation;
+    _nextId = 0;
+    _internalState;
+    _defaultRoutesParams;
+    _Context;
+    static transitions = transitions_1.transitions;
     constructor(props) {
-        this._nextId = 0;
         const { defaultAnimation = Navigator.transitions.slideAcross, initialRoute, defaultRoutesParams = {}, } = typeof props === "function" ? props(this) : props;
         this._defaultAnimation = defaultAnimation;
         this._internalState = new shared_state_1.SharedState({
@@ -106,7 +111,11 @@ class Navigator {
                     isMounted: keepMounted,
                     isVisible: false,
                     params: defaultParams || params
-                        ? Object.assign(Object.assign({}, (defaultParams && defaultParams)), (params && params)) : null,
+                        ? {
+                            ...(defaultParams && defaultParams),
+                            ...(params && params),
+                        }
+                        : null,
                 };
                 return route;
             });
@@ -148,7 +157,7 @@ class Navigator {
         });
     }
     goBack(backRoute, animation) {
-        const _a = backRoute || this.stack[1], { params } = _a, specifier = (0, tslib_1.__rest)(_a, ["params"]);
+        const { params, ...specifier } = backRoute || this.stack[1];
         params && this.setParams(params, specifier);
         return this.dispatch({ startingRoute: specifier, animation })[0];
     }
@@ -171,7 +180,7 @@ class Navigator {
         try {
             return (0, react_1.useContext)(this._Context);
         }
-        catch (_a) {
+        catch {
             throw new error_1.Huds0nError({
                 name: "NavigatorError",
                 code: "USE_ROUTE_ERROR",
@@ -197,13 +206,13 @@ class Navigator {
         else {
             route = this.useRoute();
         }
-        route.params = Object.assign(Object.assign({}, route.params), params);
+        route.params = { ...route.params, ...params };
         this._internalState.refresh();
     }
     initializeParams(params) {
         this.useOnFocus(() => {
             const route = this.currentRoute;
-            route.params = Object.assign(Object.assign({}, route.params), params);
+            route.params = { ...route.params, ...params };
             this._internalState.refresh();
         });
     }
@@ -223,4 +232,3 @@ class Navigator {
     }
 }
 exports.Navigator = Navigator;
-Navigator.transitions = transitions_1.transitions;
